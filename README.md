@@ -1,3 +1,5 @@
+**Download:** [poggit.pmmp.io](https://poggit.pmmp.io/ci/skyzonemc/UglyTroll/)
+
 ### Features
 | Command | Function | Permission |
 | ------------ | ------------ | ------------- |
