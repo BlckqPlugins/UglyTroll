@@ -18,8 +18,6 @@ class RotatePlayerTask extends Task {
 
     public function onRun(int $currentTick) {
         if ($this->player->isOnline()) {
-            $yaw = $this->player->getYaw();
-            var_dump($yaw);
             if($this->rounds == 0){
                 $this->player->setImmobile(false);
                 $this->getHandler()->cancel();
