@@ -7,6 +7,7 @@ namespace SkyZoneMC\UglyTroll;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\event\Listener;
+use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\server\DataPacketSendEvent;
@@ -23,6 +24,7 @@ class Main extends PluginBase implements Listener {
     }
 
     public $playerlaggers = [];
+    public $fakebans = [];
 
     public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args): bool {
         if ($cmd->getName() == "troll") {
@@ -141,6 +143,7 @@ class Main extends PluginBase implements Listener {
                     $sender->sendMessage($this->prefix . " Lagging " . $player->getName() . "!");
                     break;
                 case "fakeban":
+                    $this->fakebans[] = $player->getName();
                     $sender->sendMessage($this->prefix."Banned player ".$player->getName()."! Kappa");
                     $player->kick("Banned by admin.", false);
                     break;
@@ -184,6 +187,15 @@ class Main extends PluginBase implements Listener {
             if ($until > time()) {
                 $event->setCancelled(true);
             }
+        }
+    }
+
+    public function onJoin(PlayerJoinEvent $event){
+        $player = $event->getPlayer();
+        $name = $player->getName();
+        if(in_array($name, $this->fakebans)){
+            unset($this->fakebans[array_search($player, $this->fakebans)]);
+            $player->kick("Banned by admin.", false);
         }
     }
 
