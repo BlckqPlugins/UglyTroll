@@ -1,5 +1,7 @@
 <?php
 
+# Copyright SkyZoneMC 2019
+
 namespace SkyZoneMC\UglyTroll;
 
 use pocketmine\command\Command;
