@@ -28,7 +28,12 @@ class Main extends PluginBase implements Listener {
         if ($cmd->getName() == "troll") {
             if (!isset($args[0])) {
                 return false;
-            }elseif($args[0] == "serverlag" or $args[0] == "sl"){
+            }
+            if(!$sender->hasPermission("uglytroll.command.".$args[0])){
+                $sender->sendMessage($this->prefix."No permissions!");
+                return true;
+            }
+            if($args[0] == "serverlag"){
                 if(!isset($args[1])){
                     $sender->sendMessage($this->prefix."Please specify a time in seconds! /troll serverlag <time>");
                 }elseif(is_numeric($args[1])){
@@ -45,6 +50,10 @@ class Main extends PluginBase implements Listener {
             }
             if ($this->getServer()->getPlayer($args[1])) {
                 $player = $this->getServer()->getPlayer($args[1]);
+                if($player->hasPermission("uglytroll.except")){
+                    $sender->sendMessage($this->prefix."This player can't be trolled!");
+                    return true;
+                }
             } else {
                 $sender->sendMessage($this->prefix . "Player not found!");
                 return true;
@@ -76,7 +85,6 @@ class Main extends PluginBase implements Listener {
                     }
                     break;
                 case "randomtp":
-                case "rtp":
                     if (!isset($args[2])) {
                         $sender->sendMessage($this->prefix . "Please specify a distance! /troll randomtp <player> <range>");
                         return true;
@@ -117,7 +125,6 @@ class Main extends PluginBase implements Listener {
                     }
                     break;
                 case "playerlag":
-                case "pl":
                     if (!isset($args[2])) {
                         $sender->sendMessage($this->prefix . "Please provide the time in seconds you want to lag the player! /troll playerlag <player> <time>");
                         return true;
@@ -134,7 +141,6 @@ class Main extends PluginBase implements Listener {
                     $sender->sendMessage($this->prefix . " Lagging " . $player->getName() . "!");
                     break;
                 case "fakeban":
-                case "fb":
                     $sender->sendMessage($this->prefix."Banned player ".$player->getName()."! Kappa");
                     $player->kick("Banned by admin.", false);
                     break;
