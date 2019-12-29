@@ -1,6 +1,6 @@
 ### Features
 | Command | Function | Permission |
-| ------------ | ------------ |
+| ------------ | ------------ | ------------- |
 | - | Except players from being trolled | uglytroll.except |
 | All commands | - | uglytroll.command |
 | /troll rotate -player- -rounds- | Rotates a player x-times | uglytroll.command.rotate |
