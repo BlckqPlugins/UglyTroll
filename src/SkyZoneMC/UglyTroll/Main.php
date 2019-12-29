@@ -172,7 +172,9 @@ class Main extends PluginBase implements Listener {
                 $data = $this->playerlaggers[$player->getName()];
                 unset($this->playerlaggers[$player->getName()]);
                 foreach ($data[1] as $pk) {
-                    $pk->decode();
+                    if($pk->isEncoded){
+                        $pk->decode();
+                    }
                     $player->sendDataPacket($pk);
                 }
             }
