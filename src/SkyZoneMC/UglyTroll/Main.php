@@ -1,6 +1,6 @@
 <?php
 
-# Copyright SkyZoneMC 2019
+# Copyright SkyZoneMC 2020
 
 namespace SkyZoneMC\UglyTroll;
 
