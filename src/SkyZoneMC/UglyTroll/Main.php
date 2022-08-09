@@ -1,6 +1,6 @@
 <?php
 
-# Copyright SkyZoneMC 2020
+# Copyright SkyZoneMC 2022
 
 namespace SkyZoneMC\UglyTroll;
 
@@ -13,13 +13,24 @@ use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\server\DataPacketSendEvent;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\LevelChunkPacket;
+use pocketmine\network\mcpe\protocol\Packet;
+use pocketmine\network\mcpe\protocol\SubChunkPacket;
+use pocketmine\network\mcpe\protocol\SubChunkRequestPacket;
+use pocketmine\network\mcpe\protocol\types\ChunkPosition;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
+use pocketmine\network\mcpe\protocol\types\SubChunkPosition;
+use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
+use pocketmine\Server;
+use pocketmine\world\ChunkManager;
+use pocketmine\world\SimpleChunkManager;
+use SkyZoneMC\UglyTroll\Tasks\PlayerKickTask;
 use SkyZoneMC\UglyTroll\Tasks\RotatePlayerTask;
 
 class Main extends PluginBase implements Listener {
     private $prefix = "§l§8[§aUgly§4Troll§8] §r§f";
 
-    public function onEnable() {
+    public function onEnable(): void {
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
 
@@ -50,8 +61,8 @@ class Main extends PluginBase implements Listener {
                 $sender->sendMessage($this->prefix . "Please provide a player! /troll <function> <player> (<args..>)");
                 return true;
             }
-            if ($this->getServer()->getPlayer($args[1])) {
-                $player = $this->getServer()->getPlayer($args[1]);
+            if ($this->getServer()->getPlayerExact($args[1])) {
+                $player = $this->getServer()->getPlayerExact($args[1]);
                 if($player->hasPermission("uglytroll.except")){
                     $sender->sendMessage($this->prefix."This player can't be trolled!");
                     return true;
@@ -95,7 +106,7 @@ class Main extends PluginBase implements Listener {
                         return true;
                     }
                     $range = (int)$args[2];
-                    $pos = [$player->getFloorX(), $player->getFloorZ()];
+                    $pos = [$player->getLocation()->getFloorX(), $player->getLocation()->getFloorZ()];
                     $op1 = rand(0, 1);
                     $op2 = rand(0, 1);
                     for ($i = 0; $i <= $range; $i++) {
@@ -113,7 +124,7 @@ class Main extends PluginBase implements Listener {
                             }
                         }
                     }
-                    $loc = new Vector3($pos[0], $player->getLevel()->getHighestBlockAt($pos[0], $pos[1]), $pos[1]);
+                    $loc = new Vector3($pos[0], $player->getWorld()->getHighestBlockAt($pos[0], $pos[1]), $pos[1]);
                     $player->teleport($loc);
                     $sender->sendMessage($this->prefix . "Teleported " . $player->getName() . " to " . $loc->x . " " . $loc->y . " " . $loc->z);
                     break;
@@ -148,9 +159,13 @@ class Main extends PluginBase implements Listener {
                     $player->kick("Banned by admin.", false);
                     break;
                 case "crash":
-                    $chunk = $player->getLevel()->getChunkAtPosition($player);
-                    $pk = LevelChunkPacket::withCache($chunk->getX(), $chunk->getZ(), 100000, [], "");
-                    $player->sendDataPacket($pk);
+                    $pk = LevelChunkPacket::create(
+                        new ChunkPosition($player->getPosition()->getX(), $player->getPosition()->getZ()),
+                        PHP_INT_MAX,
+                        true,
+                        [],
+                    "");
+                    $player->getNetworkSession()->sendDataPacket($pk);
                     $sender->sendMessage($this->prefix."Player should be crashed!");
                     break;
                 default:
@@ -160,34 +175,40 @@ class Main extends PluginBase implements Listener {
         return true;
     }
 
-    public function onSendPacket(DataPacketSendEvent $event) {
-        $player = $event->getPlayer();
-        $name = $player->getName();
-        if (isset($this->playerlaggers[$name])) {
-            $until = $this->playerlaggers[$name][0];
-            if ($until > time()) {
-                $event->setCancelled(true);
-                $this->playerlaggers[$player->getName()][1][] = $event->getPacket();
-            } else {
-                $data = $this->playerlaggers[$player->getName()];
-                unset($this->playerlaggers[$player->getName()]);
-                foreach ($data[1] as $pk) {
-                    if($pk->isEncoded){
-                        $pk->decode();
+    public function onSendPacket(DataPacketSendEvent $event)
+    {
+        foreach ($event->getTargets() as $target) {
+            $player = $target->getPlayer();
+            if (!$player instanceof Player) return;
+            $name = $player->getName();
+            foreach ($event->getPackets() as $packet) {
+                if (isset($this->playerlaggers[$name])) {
+                    $until = $this->playerlaggers[$name][0];
+                    if ($until > time()) {
+                        $event->cancel();
+                        $this->playerlaggers[$player->getName()][1][] = $packet;
+                    } else {
+                        $data = $this->playerlaggers[$player->getName()];
+                        unset($this->playerlaggers[$player->getName()]);
+                        foreach ($data[1] as $pk) {
+                            $player->getNetworkSession()->sendDataPacket($pk);
+                        }
                     }
-                    $player->sendDataPacket($pk);
                 }
             }
         }
     }
 
-    public function onReceivePacket(DataPacketReceiveEvent $event) {
-        $player = $event->getPlayer();
-        $name = $player->getName();
-        if (isset($this->playerlaggers[$name])) {
-            $until = $this->playerlaggers[$name][0];
-            if ($until > time()) {
-                $event->setCancelled(true);
+    public function onReceivePacket(DataPacketReceiveEvent $event)
+    {
+        $player = $event->getOrigin()->getPlayer();
+        if ($player instanceof Player) {
+            $name = $player->getName();
+            if (isset($this->playerlaggers[$name])) {
+                $until = $this->playerlaggers[$name][0];
+                if ($until > time()) {
+                    $event->cancel();
+                }
             }
         }
     }
@@ -197,7 +218,7 @@ class Main extends PluginBase implements Listener {
         $name = $player->getName();
         if(in_array($name, $this->fakebans)){
             unset($this->fakebans[array_search($player, $this->fakebans)]);
-            $player->kick("Banned by admin.", false);
+            $this->getScheduler()->scheduleDelayedTask(new PlayerKickTask($player, "Banned by admin."), 20*2);
         }
     }
 

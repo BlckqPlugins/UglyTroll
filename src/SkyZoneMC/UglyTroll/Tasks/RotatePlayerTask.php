@@ -2,7 +2,7 @@
 
 namespace SkyZoneMC\UglyTroll\Tasks;
 
-use pocketmine\Player;
+use pocketmine\player\Player;
 use pocketmine\scheduler\Task;
 
 class RotatePlayerTask extends Task {
@@ -16,7 +16,7 @@ class RotatePlayerTask extends Task {
 
     private $point = 0;
 
-    public function onRun(int $currentTick) {
+    public function onRun(): void {
         if ($this->player->isOnline()) {
             if($this->rounds == 0){
                 $this->player->setImmobile(false);
@@ -30,7 +30,7 @@ class RotatePlayerTask extends Task {
             }
 
             $yaw = 360 / 40 * $this->point;
-            $this->player->teleport($this->player, (float)$yaw, $this->player->getPitch());
+            $this->player->teleport($this->player->getPosition()->asVector3(), (float)$yaw, $this->player->getLocation()->getPitch());
             $this->point++;
         } else {
             $this->getHandler()->cancel();

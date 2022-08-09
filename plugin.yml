@@ -1,7 +1,7 @@
 name: UglyTroll
 author: SkyZoneMC
 version: 1.0
-api: 3.0.0
+api: 4.0.0
 main: SkyZoneMC\UglyTroll\Main
 description: Troll plugin for PocketMine-MP
 commands:
@@ -9,28 +9,35 @@ commands:
     description: UglyTroll main command
     aliases: [uglytroll, ug]
     usage: /troll rotate | freeze | randomtp | burn | serverlag | playerlag | fakeban | crash
+    permission: uglytroll.command
 permissions:
-  uglytroll:
-    description: Allows to use all UglyTroll Features and excepts yourself from being trolled
-    children:
-      uglytroll.except:
-        description: Excepts you from trolling
-      uglytroll.command:
-        description: This permission allows you to use all troll features
-        children:
-          uglytroll.command.rotate:
-            description: Allows to use Rotate feature
-          uglytroll.command.freeze:
-            description: Allows to use Freeze feature
-          uglytroll.command.randomtp:
-            description: Allows to use RandomTP feature
-          uglytroll.command.burn:
-            description: Allows to use Burn feature
-          uglytroll.command.serverlag:
-            description: Allows to use ServerLag feature
-          uglytroll.command.playerlag:
-            description: Allows to use PlayerLag feature
-          uglytroll.command.fakeban:
-            description: Allows to use FakeBan feature
-          uglytroll.command.crash:
-            description: Allows to use Crash feature
+  uglytroll.command:
+    description: This permission allows you to use all troll features
+    default: op
+  uglytroll.except:
+    description: Excepts you from trolling
+    default: op
+  uglytroll.command.rotate:
+    description: Allows to use Rotate feature
+    default: op
+  uglytroll.command.freeze:
+    description: Allows to use Freeze feature
+    default: op
+  uglytroll.command.randomtp:
+    description: Allows to use RandomTP feature
+    default: op
+  uglytroll.command.burn:
+    description: Allows to use Burn feature
+    default: op
+  uglytroll.command.serverlag:
+    description: Allows to use ServerLag feature
+    default: op
+  uglytroll.command.playerlag:
+    description: Allows to use PlayerLag feature
+    default: op
+  uglytroll.command.fakeban:
+    description: Allows to use FakeBan feature
+    default: op
+  uglytroll.command.crash:
+    description: Allows to use Crash feature
+    default: op
